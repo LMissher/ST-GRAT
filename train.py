@@ -9,8 +9,6 @@ import math
 
 # from lib import utils
 from utils import log_string, loadPEMSData
-# from model.sparse_trc_test import TRC
-# from model.st_capsule1 import TRC
 from model import STGRAT
 
 parser = argparse.ArgumentParser()
@@ -62,12 +60,8 @@ device = torch.device("cuda:5" if torch.cuda.is_available() else "cpu")
 
 log_string(log, "loading data....")
 
-# trainX, trainTE, trainY, valX, valTE, valY, testX, testTE, testY, SE, mean, std = loadData(args)
 trainX, trainTE, trainY, valX, valTE, valY, testX, testTE, testY, SE, mean, std = loadPEMSData(args)
 SE = torch.from_numpy(SE).to(device)
-
-# trainX, trainTE, trainY, valX, valTE, valY, testX, testTE, testY, SE, mean, std = loadDatatime(args)
-
 
 
 
@@ -112,7 +106,7 @@ def res(model, valX, valTE, valY, mean, std):
 
                 X = torch.from_numpy(valX[start_idx : end_idx]).float().to(device)
                 y = valY[start_idx : end_idx]
-                te = torch.from_numpy(valTE[start_idx : end_idx]).to(device)
+                # te = torch.from_numpy(valTE[start_idx : end_idx]).to(device)
 
                 encode_state = model.encode(X)
                 decode_start = X[:,-1:,:]
@@ -172,7 +166,7 @@ def train(model, trainX, trainTE, trainY, valX, valTE, valY, mean, std):
         train_l_sum, train_acc_sum, n, batch_count, start = 0.0, 0.0, 0, 0, time.time()
         permutation = np.random.permutation(num_train)
         trainX = trainX[permutation]
-        trainTE = trainTE[permutation]
+        # trainTE = trainTE[permutation]
         trainY = trainY[permutation]
         num_batch = math.ceil(num_train / args.batch_size)
         with tqdm(total=num_batch) as pbar:
@@ -183,7 +177,7 @@ def train(model, trainX, trainTE, trainY, valX, valTE, valY, mean, std):
                 X = torch.from_numpy(trainX[start_idx : end_idx]).float().to(device)
                 y = torch.from_numpy(trainY[start_idx : end_idx]).float().to(device)
                 x_t = torch.from_numpy(np.concatenate([trainX[start_idx : end_idx][:,-1:,:], trainY[start_idx : end_idx][:,:-1,:]], 1)).float().to(device)
-                te = torch.from_numpy(trainTE[start_idx : end_idx]).to(device)
+                # te = torch.from_numpy(trainTE[start_idx : end_idx]).to(device)
 
                 optimizer.zero_grad()
 
@@ -232,18 +226,6 @@ def masked_mae(preds, labels, null_val=np.nan):
     loss = loss * mask
     loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
     return torch.mean(loss)
-
-
-def masked_mae_loss(y_pred, y_true, flag):
-    mask = (y_true != 0).float()
-    mask /= mask.mean()
-    loss = torch.abs(y_pred - y_true)
-    loss = loss * mask
-    # trick for nans: https://discuss.pytorch.org/t/how-to-set-nan-in-tensor-to-0/3918/3
-    loss[loss != loss] = 0
-    if flag == True:
-        loss = loss * mask_l
-    return loss.mean()
 
 def metric(pred, label):
     with np.errstate(divide = 'ignore', invalid = 'ignore'):
