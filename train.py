@@ -14,6 +14,8 @@ from model import STGRAT
 parser = argparse.ArgumentParser()
 # parser.add_argument('--time_slot', type = int, default = 5,
 #                     help = 'a time step is 5 mins')
+parser.add_argument('--cuda', type = int, default = 0,
+                    help = 'which gpu card used')
 parser.add_argument('--P', type = int, default = 12,
                     help = 'history steps')
 parser.add_argument('--Q', type = int, default = 12,
@@ -56,7 +58,7 @@ args = parser.parse_args()
 
 log = open(args.log_file, 'w')
 
-device = torch.device("cuda:5" if torch.cuda.is_available() else "cpu")
+device = torch.device(f"cuda:{args.cuda}" if torch.cuda.is_available() else "cpu")
 
 log_string(log, "loading data....")
 
@@ -248,10 +250,7 @@ if __name__ == '__main__':
     maes, rmses, mapes = [], [], []
     for i in range(5):
         log_string(log, "model constructed begin....")
-        model = STGRAT(SE, 1, args.k*args.d, args.L, args.N, args.k, args.d, args.K, AS, ATS).to(device)
-        # model = make_model(device, 3, 1, 1, 64, adj, 8, 0, 0, 1, 12, 12).to(device)
-        # model = ST_Uformer(1, args.K*args.d, args.d, args.P, args.Q, args.L, SE).to(device)
-        # model = TRC(SE, 1, args.K*args.d, args.K, args.d, args.L, adj).to(device)
+        model = STGRAT(SE, 1, args.k*args.d, args.L, args.N, args.k, args.d, args.K, AS, ATS, device).to(device)
         log_string(log, "model constructed end....")
         log_string(log, "train begin....")
         train(model, trainX, trainTE, trainY, testX, testTE, testY, mean, std)
