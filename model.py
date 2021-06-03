@@ -152,7 +152,7 @@ class Spatial_Attention(nn.Module):
         # inflow
         e = torch.matmul(query[:self.k//2], key[:self.k//2].transpose(-1,-2)) / (self.d ** 0.5) + self.dcni(A)
         # e = torch.matmul(query[:self.k//2], key[:self.k//2].transpose(-1,-2)) / (self.d ** 0.5)
-        es = (query[:self.k//2] * keys[:self.k//2]).sum(-1, keepdim=True) / (self.d ** 0.5)
+        es = torch.sigmoid((query[:self.k//2] * keys[:self.k//2]).sum(-1, keepdim=True) / (self.d ** 0.5))
         e = e - torch.max(e, -1, keepdim=True)[0]
         a = torch.exp(e) / (es + torch.exp(e).sum(-1, keepdim=True))
         # a = torch.softmax(e, -1)
@@ -162,7 +162,7 @@ class Spatial_Attention(nn.Module):
         # outflow
         eo = torch.matmul(query[self.k//2:], key[self.k//2:].transpose(-1,-2)) / (self.d ** 0.5) + self.dcno(AT)
         # eo = torch.matmul(query[self.k//2:], key[self.k//2:].transpose(-1,-2)) / (self.d ** 0.5)
-        eso = (query[self.k//2:] * keys[self.k//2:]).sum(-1, keepdim=True) / (self.d ** 0.5)
+        eso = torch.sigmoid((query[self.k//2:] * keys[self.k//2:]).sum(-1, keepdim=True) / (self.d ** 0.5))
         eo = eo - torch.max(eo, -1, keepdim=True)[0]
         ao = torch.exp(eo) / (eso + torch.exp(eo).sum(-1, keepdim=True))
         # ao = torch.softmax(eo, -1)
